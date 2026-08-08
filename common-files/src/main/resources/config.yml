@@ -289,6 +289,12 @@ item:
   # The default material to use as base item if not specified
   default-material: nether_brick
 
+  # Overrides the hardcoded break power of vanilla items. This only works for custom blocks.
+  # A tool can only break a block with 'required_break_power' when its break power is greater than or equal to the required value.
+  # break-power:
+  #   minecraft:golden_pickaxe: 3
+  break-power: {}
+
   # Defines the trigger condition for the item updater.
   #
   # Warning: This operation is performance-intensive. Enable only if needed.
@@ -506,6 +512,7 @@ network:
     item: true
     advancement: true   # Toast
     player-chat: true
+    combat-kill: true   # Death messages
     dialog: true
 
   # Settings related to communication with CraftEngine Mod
@@ -513,6 +520,7 @@ network:
     requires-permission: false
     logging-permission-denied: true
     creative-tab-max-items-per-packet: 10
+    visual-block-states-max-per-packet: 5000
 
   # Encrypt the raw component information before sending it to the client.
   # Requires a restart to apply.
@@ -558,6 +566,12 @@ recipe:
 
   # Inject furnace block entities to support custom condition. This option requires a restart to apply.
   inject-block-entities: true
+
+attribute:
+  # Master switch for attribute system
+  enable: false
+  # By default, custom attribute settings only apply to players. Turn on this option to apply them to all entities
+  apply-to-all-entities: false
 
 gui:
   browser:
@@ -631,8 +645,14 @@ chunk-system:
   # Once the migration is complete, restart the server.
   #
   storage-type: mca
+  # Worlds whose name matches any of these regex patterns will always use 'none' storage mode (in-memory only)
+  # Useful for temporary or frequently reset worlds where persistence is unnecessary
+  blacklisted-worlds: []
   # Caches serialized chunk data to reduce I/O overhead for frequently loaded/unloaded chunks
   cache-system: true
+  # Writes chunk data asynchronously on dedicated IO threads instead of blocking the server thread
+  # Requires server restart to take effect
+  async-save: true
   # Compression algorithm for chunk data
   # 1 = NONE      |  Compression Speed | Decompress Speed | Compression Ratio | Memory Usage   |
   # 2 = DEFLATE   |     Medium-Slow           Medium          Moderate              Low        |
@@ -701,6 +721,19 @@ client-optimization:
       # Controls how quickly the bucket refills
       restore-per-tick: 25
 
+scripting:
+  js:
+    # Enables the JavaScript scripting system
+    # Requires server restart to fully apply
+    enable: false
+    # JS engine implementation: graaljs (~68MB) or nashorn (~2.4MB)
+    engine: nashorn
+    # Strict mode: throws on common JS mistakes (undeclared variables etc.)
+    strict: true
+    # Applicable only when GraalJS is in use
+    # Nashorn compatibility mode: bean getter mapping (event.block -> getBlock()) etc.
+    nashorn-compat: false
+
 misc:
   # Suppresses connection logs during server configuration phase
   filter-configuration-phase-disconnect: false
@@ -716,6 +749,9 @@ misc:
   # Enables AxiomPaper integration to register custom items as Axiom display items
   # This option requires a restart to apply.
   hook-axiompaper: true
+  # There are many plugins that can cause world leaks, eventually leading to a large number of chunks being leaked.
+  # Enabling this option can mitigate the world leak issues caused by most plugins.
+  fix-world-memory-leak: false
 
 debug:
   common: false

@@ -105,6 +105,9 @@ public interface EntityProxy {
     @FieldGetter(name = "eyeHeight")
     float getEyeHeight(Object target);
 
+    @MethodInvoker(name = "getEyeHeight")
+    float getEyeHeight(Object target, @Type(clazz = PoseProxy.class) Object pose);
+
     @MethodInvoker(name = "getPassengersRidingOffset", activeIf = "max_version=1.20.1")
     double getPassengersRidingOffset(Object target);
 
@@ -176,4 +179,10 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "setPose")
     void setPose(Object target, @Type(clazz = PoseProxy.class) Object pose);
+
+    @MethodInvoker(name = "getEyePosition")
+    Object getEyePosition(Object target);
+
+    @MethodInvoker(name = "getPose")
+    Object getPose(Object target);
 }

@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.plugin.config;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
@@ -36,6 +37,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public final class Config {
@@ -56,7 +59,13 @@ public final class Config {
     private boolean misc$delayConfigurationLoad;
     private boolean misc$multi_threaded_configuration_load;
     private boolean misc$inject_packet_vents;
-    private boolean misc$hook_axiom_paper = true;
+    private boolean misc$hook_axiom_paper;
+    private boolean misc$fix_world_memory_leak;
+
+    private boolean scripting$js$enable;
+    private String scripting$js$engine;
+    private boolean scripting$js$nashorn_compat;
+    private boolean scripting$js$strict;
 
     private boolean debug$common;
     private boolean debug$packet;
@@ -160,17 +169,22 @@ public final class Config {
     private boolean chunk_system$restore_custom_blocks_on_chunk_load;
     private boolean chunk_system$sync_custom_blocks_on_chunk_load;
     private boolean chunk_system$cache_system = true;
+    private boolean chunk_system$async_save = true;
     private boolean chunk_system$injection$target;
     private boolean chunk_system$process_invalid_furniture$enable;
     private Map<String, String> chunk_system$process_invalid_furniture$mapping;
     private boolean chunk_system$process_invalid_blocks$enable;
     private Map<String, String> chunk_system$process_invalid_blocks$mapping;
     private StorageType chunk_system$storage_type;
+    private List<Pattern> chunk_system$blacklisted_worlds = List.of();
     private boolean chunk_system$generation$noise;
     private boolean chunk_system$generation$structure;
     private boolean chunk_system$generation$surface;
     private boolean chunk_system$generation$carver;
     private boolean chunk_system$generation$feature;
+
+    private boolean attribute$enable;
+    private boolean attribute$apply_to_all_entities;
 
     private boolean furniture$hide_base_entity;
     private ColliderType furniture$collision_entity_type;
@@ -227,12 +241,14 @@ public final class Config {
     private boolean network$intercept_packets$item;
     private boolean network$intercept_packets$advancement;
     private boolean network$intercept_packets$player_chat;
+    private boolean network$intercept_packets$combat_kill;
     private boolean network$intercept_packets$dialog;
     private boolean network$disable_item_operations;
     private boolean network$disable_chat_report;
     private boolean network$mod_channel$requires_permission;
     private boolean network$mod_channel$logging_permission_denied;
-    private int network$mod_channel$creative_tab_max_items_per_packet;
+    private int network$mod_channel$creative_tab_max_items_per_packet = 10;
+    private int network$mod_channel$visual_block_states_max_per_packet = 5000;
     private boolean network$item_crypto$enable;
     private boolean network$optimize_item_codec;
 
@@ -244,6 +260,7 @@ public final class Config {
     private boolean item$update_triggers$pick_up;
     private int item$custom_model_data_starting_value$default;
     private Map<Key, Integer> item$custom_model_data_starting_value$overrides;
+    private Map<Key, Integer> item$break_power;
     private boolean item$always_use_item_model;
     private boolean item$always_use_custom_model_data;
     private boolean item$always_generate_model_overrides;
@@ -344,6 +361,7 @@ public final class Config {
                             .addIgnoredRoute(PluginProperties.getValue("config"), "chunk-system.process-invalid-blocks.convert", '.')
                             .addIgnoredRoute(PluginProperties.getValue("config"), "chunk-system.process-invalid-furniture.convert", '.')
                             .addIgnoredRoute(PluginProperties.getValue("config"), "item.custom-model-data-starting-value.overrides", '.')
+                            .addIgnoredRoute(PluginProperties.getValue("config"), "item.break-power", '.')
                             .addIgnoredRoute(PluginProperties.getValue("config"), "block.deceive-bukkit-material.overrides", '.')
                             .build());
         }
@@ -367,6 +385,13 @@ public final class Config {
         this.misc$multi_threaded_configuration_load = config.getBoolean("misc.multi-threaded-configuration-load", true);
         this.misc$inject_packet_vents = config.getBoolean("misc.inject-packetevents", false);
         this.misc$hook_axiom_paper = config.getBoolean("misc.hook-axiompaper", true);
+        this.misc$fix_world_memory_leak = config.getBoolean("misc.fix-world-memory-leak", false);
+
+        // scripting
+        this.scripting$js$enable = config.getBoolean("scripting.js.enable", false);
+        this.scripting$js$engine = config.getString("scripting.js.engine", "nashorn");
+        this.scripting$js$nashorn_compat = config.getBoolean("scripting.js.nashorn-compat", true);
+        this.scripting$js$strict = config.getBoolean("scripting.js.strict", true);
 
         // basics
         this.metrics = config.getBoolean("metrics", false);
@@ -514,10 +539,20 @@ public final class Config {
         } catch (IllegalArgumentException e) {
             this.chunk_system$storage_type = StorageType.MCA;
         }
+        ImmutableList.Builder<Pattern> blacklistedWorldsBuilder = ImmutableList.builder();
+        for (String regex : config.getStringList("chunk-system.blacklisted-worlds")) {
+            try {
+                blacklistedWorldsBuilder.add(Pattern.compile(regex));
+            } catch (PatternSyntaxException e) {
+                this.plugin.logger().warn("Invalid regex in chunk-system.blacklisted-worlds: " + regex, e);
+            }
+        }
+        this.chunk_system$blacklisted_worlds = blacklistedWorldsBuilder.build();
         this.chunk_system$restore_vanilla_blocks_on_chunk_unload = config.getBoolean("chunk-system.restore-vanilla-blocks-on-chunk-unload", true);
         this.chunk_system$restore_custom_blocks_on_chunk_load = config.getBoolean("chunk-system.restore-custom-blocks-on-chunk-load", true);
         this.chunk_system$sync_custom_blocks_on_chunk_load = config.getBoolean("chunk-system.sync-custom-blocks-on-chunk-load", false);
         this.chunk_system$cache_system = config.getBoolean("chunk-system.cache-system", true);
+        this.chunk_system$async_save = config.getBoolean("chunk-system.async-save", true);
 
         if (this.firstTime) {
             this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette")
@@ -559,6 +594,10 @@ public final class Config {
         this.chunk_system$generation$noise = config.getBoolean("chunk-system.generation.noise", true);
         this.chunk_system$generation$structure = config.getBoolean("chunk-system.generation.structure", true);
         this.chunk_system$generation$surface = config.getBoolean("chunk-system.generation.surface", true);
+
+        // attribute
+        this.attribute$enable = config.getBoolean("attribute.enable", true);
+        this.attribute$apply_to_all_entities = config.getBoolean("attribute.apply-to-all-entities", false);
 
         // furniture
         this.furniture$hide_base_entity = config.getBoolean("furniture.hide-base-entity", true);
@@ -618,6 +657,20 @@ public final class Config {
             this.item$custom_model_data_starting_value$overrides = customModelDataOverrides;
         } else {
             this.item$custom_model_data_starting_value$overrides = Map.of();
+        }
+        Section breakPowerSection = config.getSection("item.break-power");
+        if (breakPowerSection != null) {
+            Map<Key, Integer> breakPowerOverrides = new HashMap<>();
+            for (Map.Entry<String, Object> entry : breakPowerSection.getStringRouteMappedValues(false).entrySet()) {
+                if (entry.getValue() instanceof String s) {
+                    breakPowerOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
+                } else if (entry.getValue() instanceof Integer i) {
+                    breakPowerOverrides.put(Key.of(entry.getKey()), i);
+                }
+            }
+            this.item$break_power = breakPowerOverrides;
+        } else {
+            this.item$break_power = Map.of();
         }
 
         // block
@@ -715,10 +768,12 @@ public final class Config {
         this.network$intercept_packets$item = config.getBoolean("network.intercept-packets.item", true);
         this.network$intercept_packets$advancement = config.getBoolean("network.intercept-packets.advancement", true);
         this.network$intercept_packets$player_chat = config.getBoolean("network.intercept-packets.player-chat", true);
+        this.network$intercept_packets$combat_kill = config.getBoolean("network.intercept-packets.combat-kill", true);
         this.network$intercept_packets$dialog = config.getBoolean("network.intercept-packets.dialog", true);
         this.network$mod_channel$requires_permission = config.getBoolean("network.mod-channel.requires-permission", true);
         this.network$mod_channel$logging_permission_denied = config.getBoolean("network.mod-channel.logging-permission-denied", true);
         this.network$mod_channel$creative_tab_max_items_per_packet = Math.max(config.getInt("network.mod-channel.creative-tab-max-items-per-packet", 10), 1);
+        this.network$mod_channel$visual_block_states_max_per_packet = Math.max(config.getInt("network.mod-channel.visual-block-states-max-per-packet", 5000), 1);
         if (this.firstTime) {
             this.network$item_crypto$enable = config.getBoolean("network.item-crypto.enable", false);
             if (this.network$item_crypto$enable) {
@@ -787,8 +842,28 @@ public final class Config {
         return instance.misc$inject_packet_vents;
     }
 
+    public static boolean enableJsScripting() {
+        return instance.scripting$js$enable;
+    }
+
+    public static String jsEngine() {
+        return instance.scripting$js$engine;
+    }
+
+    public static boolean jsNashornCompat() {
+        return instance.scripting$js$nashorn_compat;
+    }
+
+    public static boolean jsStrictMode() {
+        return instance.scripting$js$strict;
+    }
+
     public static boolean hookAxiomPaper() {
         return instance.misc$hook_axiom_paper;
+    }
+
+    public static boolean fixWorldMemoryLeak() {
+        return instance.misc$fix_world_memory_leak;
     }
 
     public static boolean debugCommon() {
@@ -1174,6 +1249,10 @@ public final class Config {
         return instance.item$custom_model_data_starting_value$default;
     }
 
+    public static Map<Key, Integer> itemBreakPowerOverrides() {
+        return instance.item$break_power;
+    }
+
     public static int codepointStartingValue(Key font) {
         if (instance.image$codepoint_starting_value$overrides.containsKey(font)) {
             return instance.image$codepoint_starting_value$overrides.get(font);
@@ -1193,6 +1272,15 @@ public final class Config {
         return instance.chunk_system$storage_type;
     }
 
+    public static boolean isBlacklistedWorld(String world) {
+        for (Pattern pattern : instance.chunk_system$blacklisted_worlds) {
+            if (pattern.matcher(world).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean disableChatReport() {
         return instance.network$disable_chat_report;
     }
@@ -1207,6 +1295,10 @@ public final class Config {
 
     public static int modChannelCreativeTabMaxItemsPerPacket() {
         return instance.network$mod_channel$creative_tab_max_items_per_packet;
+    }
+
+    public static int modChannelVisualBlockStatesMaxPerPacket() {
+        return instance.network$mod_channel$visual_block_states_max_per_packet;
     }
 
     public static boolean enableItemCrypto() {
@@ -1285,6 +1377,10 @@ public final class Config {
         return instance.network$intercept_packets$player_chat;
     }
 
+    public static boolean interceptCombatKill() {
+        return instance.network$intercept_packets$combat_kill;
+    }
+
     public static boolean interceptDialog() {
         return instance.network$intercept_packets$dialog;
     }
@@ -1327,6 +1423,10 @@ public final class Config {
 
     public static boolean enableChunkCache() {
         return instance.chunk_system$cache_system;
+    }
+
+    public static boolean enableAsyncChunkSave() {
+        return instance.chunk_system$async_save;
     }
 
     public static boolean addNonItalicTag() {
@@ -1599,6 +1699,14 @@ public final class Config {
 
     public static boolean generationSurface() {
         return instance.chunk_system$generation$surface;
+    }
+
+    public static boolean enableAttributeSystem() {
+        return instance.attribute$enable;
+    }
+
+    public static boolean applyAttributeToAll() {
+        return instance.attribute$apply_to_all_entities;
     }
 
     public YamlDocument loadYamlConfig(String filePath, GeneralSettings generalSettings, LoaderSettings loaderSettings, DumperSettings dumperSettings, UpdaterSettings updaterSettings) {

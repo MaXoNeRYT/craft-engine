@@ -18,14 +18,16 @@ import java.util.*;
 
 public final class ItemSettings {
     int fuelTime;
+    int breakPower = -1;
     Set<Key> tags = Set.of();
     Repairable repairable = Repairable.UNDEFINED;
     List<AnvilRepairItem> anvilRepairItems = List.of();
+    List<DragRepairItem> dragRepairItems = List.of();
     boolean renameable = true;
+    boolean preventBreak = false;
     boolean disableVanillaBehavior = true;
     ProjectileMeta projectileMeta;
     Tristate dyeable = Tristate.UNDEFINED;
-    Helmet helmet = null;
     FoodData foodData = null;
     Key consumeReplacement = null;
     CraftRemainder craftRemainder = null;
@@ -50,6 +52,8 @@ public final class ItemSettings {
     Map<CustomItemSettingType<?>, Object> customData = new IdentityHashMap<>(4);
     boolean triggerAdvancement = false;
     Set<Key> allowedProjectiles = Set.of();
+    EquipmentSetPart equipmentSetPart;
+    AttributeModifiers attributeModifiers;
 
     private ItemSettings() {}
 
@@ -121,15 +125,17 @@ public final class ItemSettings {
     public static ItemSettings ofFullCopy(ItemSettings settings) {
         ItemSettings newSettings = of();
         newSettings.fuelTime = settings.fuelTime;
+        newSettings.breakPower = settings.breakPower;
         newSettings.tags = settings.tags;
         newSettings.equipment = settings.equipment;
         newSettings.repairable = settings.repairable;
         newSettings.anvilRepairItems = settings.anvilRepairItems;
+        newSettings.dragRepairItems = settings.dragRepairItems;
         newSettings.renameable = settings.renameable;
+        newSettings.preventBreak = settings.preventBreak;
         newSettings.disableVanillaBehavior = settings.disableVanillaBehavior;
         newSettings.projectileMeta = settings.projectileMeta;
         newSettings.dyeable = settings.dyeable;
-        newSettings.helmet = settings.helmet;
         newSettings.foodData = settings.foodData;
         newSettings.consumeReplacement = settings.consumeReplacement;
         newSettings.craftRemainder = settings.craftRemainder;
@@ -146,6 +152,8 @@ public final class ItemSettings {
         newSettings.glowColor = settings.glowColor;
         newSettings.dropDisplay = settings.dropDisplay;
         newSettings.triggerAdvancement = settings.triggerAdvancement;
+        newSettings.equipmentSetPart = settings.equipmentSetPart;
+        newSettings.attributeModifiers = settings.attributeModifiers;
         newSettings.customData = new IdentityHashMap<>(settings.customData);
         return newSettings;
     }
@@ -201,8 +209,16 @@ public final class ItemSettings {
         return this.fuelTime;
     }
 
+    public int breakPower() {
+        return this.breakPower;
+    }
+
     public boolean renameable() {
         return this.renameable;
+    }
+
+    public boolean preventBreak() {
+        return this.preventBreak;
     }
 
     public Set<Key> tags() {
@@ -219,6 +235,10 @@ public final class ItemSettings {
 
     public List<AnvilRepairItem> repairItems() {
         return this.anvilRepairItems;
+    }
+
+    public List<DragRepairItem> dragRepairItems() {
+        return this.dragRepairItems;
     }
 
     public boolean respectRepairableComponent() {
@@ -242,11 +262,6 @@ public final class ItemSettings {
     @Nullable
     public CraftRemainder craftRemainder() {
         return this.craftRemainder;
-    }
-
-    @Nullable
-    public Helmet helmet() {
-        return this.helmet;
     }
 
     @Nullable
@@ -303,6 +318,16 @@ public final class ItemSettings {
         return this.allowedProjectiles;
     }
 
+    @Nullable
+    public EquipmentSetPart equipmentSetPart() {
+        return this.equipmentSetPart;
+    }
+
+    @Nullable
+    public AttributeModifiers attributeModifiers() {
+        return this.attributeModifiers;
+    }
+
     public ItemSettings fireworkColor(Color color) {
         this.fireworkColor = color;
         return this;
@@ -320,6 +345,11 @@ public final class ItemSettings {
 
     public ItemSettings repairItems(List<AnvilRepairItem> items) {
         this.anvilRepairItems = items;
+        return this;
+    }
+
+    public ItemSettings dragRepairItems(List<DragRepairItem> items) {
+        this.dragRepairItems = items;
         return this;
     }
 
@@ -353,6 +383,11 @@ public final class ItemSettings {
         return this;
     }
 
+    public ItemSettings preventBreak(boolean preventBreak) {
+        this.preventBreak = preventBreak;
+        return this;
+    }
+
     public ItemSettings dropDisplay(String showName) {
         this.dropDisplay = showName;
         return this;
@@ -373,6 +408,11 @@ public final class ItemSettings {
         return this;
     }
 
+    public ItemSettings breakPower(int breakPower) {
+        this.breakPower = breakPower;
+        return this;
+    }
+
     public ItemSettings tags(Set<Key> tags) {
         this.tags = tags;
         return this;
@@ -390,11 +430,6 @@ public final class ItemSettings {
 
     public ItemSettings dyeable(Tristate bool) {
         this.dyeable = bool;
-        return this;
-    }
-
-    public ItemSettings helmet(Helmet helmet) {
-        this.helmet = helmet;
         return this;
     }
 
@@ -435,6 +470,16 @@ public final class ItemSettings {
 
     public ItemSettings allowedProjectiles(Set<Key> allowedProjectiles) {
         this.allowedProjectiles = allowedProjectiles;
+        return this;
+    }
+
+    public ItemSettings equipmentSetPart(EquipmentSetPart equipmentSetPart) {
+        this.equipmentSetPart = equipmentSetPart;
+        return this;
+    }
+
+    public ItemSettings attributeModifiers(AttributeModifiers attributeModifiers) {
+        this.attributeModifiers = attributeModifiers;
         return this;
     }
 }

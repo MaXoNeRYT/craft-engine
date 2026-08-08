@@ -12,11 +12,11 @@ import java.util.function.BiConsumer;
 
 public interface CompatibilityManager {
 
-    void onLoad();
-
     void onEnable();
 
     void onDelayedEnable();
+
+    default void onInitialResourcesLoaded() {}
 
     void runDelayedSyncTasks();
 

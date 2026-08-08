@@ -25,7 +25,8 @@ public interface NetworkManager extends Manageable {
 
     Channel getChannel(Player player);
 
-    @Nullable NetWorkUser getOnlineUser(UUID uuid);
+    @Nullable
+    Player getOnlineUser(UUID uuid);
 
     int remapBlockState(int stateId, boolean enableMod);
 
@@ -52,6 +53,8 @@ public interface NetworkManager extends Manageable {
     void sendPackets(@NotNull NetWorkUser player, List<Object> packet, boolean immediately, Runnable sendListener);
 
     void simulatePacket(@NotNull NetWorkUser player, Object packet);
+
+    boolean hasNetworkTag(String text);
 
     Map<String, ComponentProvider> matchNetworkTags(String text);
 

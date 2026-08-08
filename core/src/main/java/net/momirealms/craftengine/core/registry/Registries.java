@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.registry;
 
+import net.momirealms.craftengine.core.attribute.DamageFormula;
+import net.momirealms.craftengine.core.attribute.DamageFormulaType;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorType;
@@ -22,14 +24,14 @@ import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureSetting
 import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureSettingsModifierType;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorType;
-import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
-import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicateType;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.equipment.EquipmentType;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.ItemProcessorType;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeSerializer;
+import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
+import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicateType;
 import net.momirealms.craftengine.core.item.recipe.remainder.CraftRemainder;
 import net.momirealms.craftengine.core.item.recipe.remainder.CraftRemainderType;
 import net.momirealms.craftengine.core.item.recipe.result.PostProcessor;
@@ -45,6 +47,8 @@ import net.momirealms.craftengine.core.loot.function.LootFunction;
 import net.momirealms.craftengine.core.loot.function.LootFunctionType;
 import net.momirealms.craftengine.core.loot.function.formula.Formula;
 import net.momirealms.craftengine.core.loot.function.formula.FormulaType;
+import net.momirealms.craftengine.core.loot.source.LootSource;
+import net.momirealms.craftengine.core.loot.source.LootSourceType;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.matcher.PathMatcherType;
 import net.momirealms.craftengine.core.pack.conflict.resolution.Resolution;
@@ -99,6 +103,7 @@ public final class Registries {
     public static final ResourceKey<Registry<BlockBehaviorType<? extends BlockBehavior>>> BLOCK_BEHAVIOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("block_behavior_type"));
     public static final ResourceKey<Registry<ItemBehaviorType<? extends ItemBehavior>>> ITEM_BEHAVIOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("item_behavior_type"));
     public static final ResourceKey<Registry<NumberProviderType<? extends NumberProvider>>> NUMBER_PROVIDER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("number_provider_type"));
+    public static final ResourceKey<Registry<DamageFormulaType<? extends DamageFormula>>> DAMAGE_FORMULA_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("damage_formula_type"));
     public static final ResourceKey<Registry<TemplateArgumentType<? extends TemplateArgument>>> TEMPLATE_ARGUMENT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("template_argument_type"));
     public static final ResourceKey<Registry<ItemModelType<? extends ItemModel>>> ITEM_MODEL_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("item_model_type"));
     public static final ResourceKey<Registry<TintType<? extends Tint>>> TINT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("tint_type"));
@@ -134,6 +139,7 @@ public final class Registries {
     public static final ResourceKey<Registry<ItemSettingsModifierType<? extends ItemSettingsModifier>>> ITEM_SETTINGS_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("item_settings_type"));
     public static final ResourceKey<Registry<LootFunctionType<? extends LootFunction>>> LOOT_FUNCTION_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("loot_function_type"));
     public static final ResourceKey<Registry<LootEntryContainerType<? extends LootEntryContainer>>> LOOT_ENTRY_CONTAINER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("loot_entry_container_type"));
+    public static final ResourceKey<Registry<LootSourceType<? extends LootSource>>> LOOT_SOURCE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("loot_source_type"));
     public static final ResourceKey<Registry<Dialog.Type<? extends Dialog>>> DIALOG_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("dialog_type"));
     public static final ResourceKey<Registry<DialogBody.Type<? extends DialogBody>>> DIALOG_BODY_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("dialog_body_type"));
     public static final ResourceKey<Registry<DialogAction.Type<? extends DialogAction>>> DIALOG_ACTION_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("dialog_action_type"));

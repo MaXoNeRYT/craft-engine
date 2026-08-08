@@ -1,10 +1,16 @@
 package net.momirealms.craftengine.core.plugin.text.component;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.nbt.api.BinaryTagHolder;
 import net.kyori.adventure.text.event.DataComponentValueConverterRegistry;
 import net.kyori.adventure.text.serializer.gson.GsonDataComponentValue;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.TagParser;
+import net.momirealms.sparrow.nbt.EndTag;
+import net.momirealms.sparrow.nbt.Tag;
 import net.momirealms.sparrow.nbt.adventure.NBTDataComponentValue;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.constructor.SConstructor2;
@@ -34,7 +40,28 @@ public final class NBTDataComponentConverter {
                 GsonDataComponentValue.class,
                 (key, srcValue) -> GsonDataComponentValue.gsonDataComponentValue(JsonNull.INSTANCE)
         );
-
+        DataComponentValueConverterRegistry.Conversion<BinaryTagHolder, GsonDataComponentValue> convertor3 = DataComponentValueConverterRegistry.Conversion.convert(
+                BinaryTagHolder.class,
+                GsonDataComponentValue.class,
+                (key, srcValue) -> GsonDataComponentValue.gsonDataComponentValue(GsonHelper.get().fromJson(srcValue.toString(), JsonElement.class))
+        );
+        DataComponentValueConverterRegistry.Conversion<BinaryTagHolder, NBTDataComponentValue> convertor4 = DataComponentValueConverterRegistry.Conversion.convert(
+                BinaryTagHolder.class,
+                NBTDataComponentValue.class,
+                (key, srcValue) -> {
+                    try {
+                        Tag tag = TagParser.parseTagFully(srcValue.string());
+                        if (tag == EndTag.INSTANCE) {
+                            return NBTDataComponentValue.removed();
+                        } else {
+                            return NBTDataComponentValue.nbtDataComponentValue(tag);
+                        }
+                    } catch (Exception e) {
+                        CraftEngine.instance().logger().warn("Failed to parse NBTDataComponentValue from " + srcValue, e);
+                        return NBTDataComponentValue.removed();
+                    }
+                }
+        );
         SConstructor2 constructor = SparrowClass.of(SparrowClass.find("net.kyori.adventure.text.event.DataComponentValueConverterRegistry$RegisteredConversion"))
                 .getDeclaredSparrowConstructor(ConstructorMatcher.takeArguments(Key.class, DataComponentValueConverterRegistry.Conversion.class))
                 .asm$2();
@@ -43,5 +70,9 @@ public final class NBTDataComponentConverter {
                 .computeIfAbsent(GsonDataComponentValue.class, $ -> constructor.newInstance(Key.key("craftengine", "serializer/nbt"), convertor1));
         CACHE.computeIfAbsent(NBTDataComponentValue.RemovedNBTDataComponentValue.class, $ -> new ConcurrentHashMap<>())
                 .computeIfAbsent(GsonDataComponentValue.class, $ -> constructor.newInstance(Key.key("craftengine", "serializer/nbt"), convertor2));
+        CACHE.computeIfAbsent(SparrowClass.find("net.kyori.adventure.nbt.api.BinaryTagHolderImpl"), $ -> new ConcurrentHashMap<>())
+                .computeIfAbsent(GsonDataComponentValue.class, $ -> constructor.newInstance(Key.key("craftengine", "serializer/nbt"), convertor3));
+        CACHE.computeIfAbsent(SparrowClass.find("net.kyori.adventure.nbt.api.BinaryTagHolderImpl"), $ -> new ConcurrentHashMap<>())
+                .computeIfAbsent(NBTDataComponentValue.class, $ -> constructor.newInstance(Key.key("craftengine", "serializer/nbt"), convertor4));
     }
 }

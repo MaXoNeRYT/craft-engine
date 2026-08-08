@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.item;
 
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.core.attribute.AttributeModifier;
+import net.momirealms.craftengine.core.attribute.vanilla.AttributeModifier;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
@@ -15,6 +15,9 @@ import net.momirealms.craftengine.core.item.customdata.CustomDataSerializers;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.setting.value.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
+import net.momirealms.craftengine.core.plugin.context.ContextKey;
+import net.momirealms.craftengine.core.plugin.context.parameter.ItemParameterProvider;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -31,7 +34,12 @@ import java.util.Optional;
  * This interface provides methods for managing item properties such as custom model data,
  * damage, display name, lore, enchantments, and tags.
  */
-public interface Item {
+public interface Item extends ChainParameterSource {
+
+    @Override
+    default <T> Optional<T> getParameter(ContextKey<T> key) {
+        return ItemParameterProvider.INSTANCE.getOptionalParameter(key, this);
+    }
 
     static Item byId(final Key id) {
         return CraftEngine.instance().itemManager().getBuildableItem(id)
@@ -61,6 +69,10 @@ public interface Item {
 
     static Item fromBytes(final byte[] bytes) {
         return CraftEngine.instance().itemManager().fromBytes(bytes);
+    }
+
+    static Item fromBytes(final byte[] bytes, final boolean useCache) {
+        return CraftEngine.instance().itemManager().fromBytes(bytes, useCache);
     }
 
     default Item toClientSide(Player player) {

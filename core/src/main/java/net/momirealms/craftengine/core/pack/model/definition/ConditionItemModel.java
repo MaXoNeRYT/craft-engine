@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.definition;
 
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.model.definition.condition.ConditionProperties;
 import net.momirealms.craftengine.core.pack.model.definition.condition.ConditionProperty;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
@@ -12,6 +13,7 @@ import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.function.Consumer;
 
 public final class ConditionItemModel implements ItemModel {
@@ -86,11 +88,11 @@ public final class ConditionItemModel implements ItemModel {
         private static final String[] ON_FALSE = new String[] {"on_false", "on-false"};
 
         @Override
-        public ConditionItemModel create(ConfigSection section) {
+        public ConditionItemModel create(Pack pack, Path path, ConfigSection section) {
             return new ConditionItemModel(
                     ConditionProperties.fromConfig(section),
-                    section.getNonNullValue(ON_TRUE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, ItemModels::fromConfig),
-                    section.getNonNullValue(ON_FALSE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, ItemModels::fromConfig),
+                    section.getNonNullValue(ON_TRUE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v)),
+                    section.getNonNullValue(ON_FALSE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v)),
                     section.getValue("transformation", Transformation::fromConfig)
             );
         }

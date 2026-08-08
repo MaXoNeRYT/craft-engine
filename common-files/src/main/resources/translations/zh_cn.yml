@@ -124,6 +124,7 @@ snbt.parser.incorrect: 应为字面量<arg:0>
 yaml.duplicated_key: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”
 yaml.inconsistent_value_type: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”且值类型不同
 plugin.compatibility: '[兼容性] 已挂钩 <arg:0>'
+attribute.damage_formula.unknown_type: 未知的伤害公式类型“<arg:0>”
 number.unknown_type: 未知的数字类型“<arg:0>”
 number.fixed.invalid_expression: 无效的表达式“<arg:0>”。https://ezylang.github.io/EvalEx/references/references.html
 number.greater_than: “<arg:0>”应大于“<arg:1>”
@@ -137,6 +138,10 @@ player_selector.unknown_type: 未知的玩家选择器类型“<arg:0>”
 loot.entry.unknown_type: 未知的战利品条目类型“<arg:0>”
 loot.function.unknown_type: 未知的战利品函数类型“<arg:0>”
 loot.function.formula.unknown_type: 未知的公式类型“<arg:0>”
+loot.source.unknown_type: 未知的战利品来源类型“<arg:0>”
+loot.source.unknown_overwrite_mode: 未知的战利品来源覆写模式“<arg:0>”
+loot.source.target_not_allowed: 战利品来源类型“<arg:0>”不支持配置“target”
+loot.source.invalid_target: 无效的战利品来源目标“<arg:0>”
 host.unknown_type: 未知的资源包托管类型“<arg:0>”
 host.missing_environment_variable: 缺少环境变量“<arg:0>”
 host.get_url_failed: 获取玩家<arg:0>的资源包下载链接失败
@@ -167,6 +172,7 @@ resource_pack.malformatted_json: Json文件“<arg:0>”的格式不正确
 resource_pack.not_a_json_object: Json文件“<arg:0>”不是一个json对象
 resource_pack.conflict_resolution.unknown_type: 未知的文件冲突解决方案类型“<arg:0>”
 resource_pack.model_generation.conflict: 无法生成模型，因为模型文件“<arg:0>”已存在
+resource_pack.texture_generation.conflict: 无法生成贴图,因为贴图文件“<arg:0>”已存在
 resource_pack.item_model.conflict: 无法生成物品模型映射“<arg:0>”，因为文件“<arg:1>”已存在
 resource_pack.missing_font_texture: 字体“<arg:0>”缺少纹理“<arg:1>”
 resource_pack.missing_model_texture: 模型“<arg:0>”缺少纹理“<arg:1>”
@@ -282,6 +288,9 @@ resource.item.missing_model_id: 缺少“custom_model_data”或“item_model”
 resource.item.occupied_vanilla_item_model: 物品模型“<arg:0>”已被原版物品占用
 resource.item.invalid_material: 无效的物品类型“<arg:0>”
 resource.model.generation.conflict: 无法为“<arg:0>”生成模型，因为有两个或多个配置试图使用相同的路径生成不同的json模型
+resource.texture.generation.conflict: 无法为“<arg:0>”生成贴图,因为有两个或多个配置试图使用相同的路径生成不同的贴图
+resource.model.bbmodel.invalid_file: 无法读取或解析 bbmodel 文件“<arg:0>”
+resource.model.bbmodel.invalid_name: bbmodel 文件名“<arg:0>”不是有效的资源路径,请仅使用小写字母、数字、_、-、.、/ 重命名
 resource.recipe.transform_processor.unknown_type: 未知的锻造配方后处理器类型“<arg:0>”
 resource.recipe.ingredient.invalid_tag: 物品标签“<arg:0>”不包含任何物品
 resource.recipe.ingredient.item_not_exist: 原料物品“<arg:0>”不存在
@@ -292,4 +301,3 @@ resource.recipe.shaped_transform.ambigious_source: 在有序合成转化配方�
 resource.recipe.shaped_transform.source_not_found: 无法在配方中找到标记为source的原料
 resource.recipe.post_processor.unknown_type: 未知的配方结果后处理器类型“<arg:0>”
 resource.recipe.unknown_type: 未知的配方类型“<arg:0>”
-resource.vanilla_loot.block.invalid_target: 无效的方块目标“<arg:0>”

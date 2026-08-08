@@ -5,6 +5,7 @@ import net.momirealms.antigrieflib.AntiGriefCompatibility;
 import net.momirealms.antigrieflib.AntiGriefLib;
 import net.momirealms.craftengine.bukkit.advancement.BukkitAdvancementManager;
 import net.momirealms.craftengine.bukkit.api.event.CraftEngineReloadEvent;
+import net.momirealms.craftengine.bukkit.attribute.BukkitAttributeManager;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehaviors;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.constant.BukkitBlockEntityElementConfigs;
@@ -17,8 +18,8 @@ import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeatManager;
 import net.momirealms.craftengine.bukkit.font.BukkitFontManager;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.behavior.BukkitItemBehaviors;
-import net.momirealms.craftengine.bukkit.item.recipe.predicate.BukkitDataComponentPredicates;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
+import net.momirealms.craftengine.bukkit.item.recipe.predicate.BukkitDataComponentPredicates;
 import net.momirealms.craftengine.bukkit.loot.BukkitLootManager;
 import net.momirealms.craftengine.bukkit.pack.BukkitPackManager;
 import net.momirealms.craftengine.bukkit.painting.BukkitPaintingManager;
@@ -30,6 +31,8 @@ import net.momirealms.craftengine.bukkit.plugin.injector.*;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.proxy.BukkitProxyMessageManager;
 import net.momirealms.craftengine.bukkit.plugin.scheduler.BukkitSchedulerAdapter;
+import net.momirealms.craftengine.bukkit.plugin.script.BukkitScriptEventManager;
+import net.momirealms.craftengine.bukkit.plugin.script.BukkitScriptPlaceholderManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.sound.BukkitSoundManager;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
@@ -48,6 +51,7 @@ import net.momirealms.craftengine.core.plugin.dependency.Dependency;
 import net.momirealms.craftengine.core.plugin.logger.JavaPluginLogger;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
+import net.momirealms.craftengine.core.plugin.script.ScriptManagerImpl;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.BukkitProxy;
 import org.bstats.bukkit.Metrics;
@@ -70,13 +74,14 @@ import java.util.zip.ZipInputStream;
 public final class BukkitCraftEngine extends CraftEngine {
     private static final String COMPATIBILITY_CLASS = "net.momirealms.craftengine.bukkit.compatibility.BukkitCompatibilityManager";
     private static BukkitCraftEngine instance;
+    private final List<AntiGriefCompatibility> antiGriefProviders = new ArrayList<>(1);
+    private final Path dataFolderPath;
     private SchedulerTask tickTask;
     private boolean successfullyLoaded = false;
     private boolean successfullyEnabled = false;
-    private final List<AntiGriefCompatibility> antiGriefProviders = new ArrayList<>(1);
     private AntiGriefLib antiGrief;
     private JavaPlugin javaPlugin;
-    private final Path dataFolderPath;
+    private ServerEventListener serverEventListener;
 
     BukkitCraftEngine(JavaPlugin plugin) {
         this(new JavaPluginLogger(plugin.getLogger()), plugin.getDataFolder().toPath().toAbsolutePath(),
@@ -85,10 +90,6 @@ public final class BukkitCraftEngine extends CraftEngine {
     }
 
     BukkitCraftEngine(PluginLogger logger, Path dataFolderPath, ClassPathAppender sharedClassPathAppender, ClassPathAppender privateClassPathAppender) {
-        super((p) -> {
-            CraftEngineReloadEvent event = new CraftEngineReloadEvent((BukkitCraftEngine) p);
-            EventUtils.fireAndForget(event);
-        });
         instance = this;
         this.dataFolderPath = dataFolderPath;
         super.sharedClassPathAppender = sharedClassPathAppender;
@@ -104,6 +105,15 @@ public final class BukkitCraftEngine extends CraftEngine {
                 logger().warn("Compatibility class could not be instantiated: " + compatibilityClass.getName());
             }
         }
+    }
+
+    @Override
+    protected void callReloadEvent() {
+        EventUtils.fireAndForget(new CraftEngineReloadEvent(this));
+    }
+
+    public static BukkitCraftEngine instance() {
+        return instance;
     }
 
     void setJavaPlugin(JavaPlugin javaPlugin) {
@@ -122,6 +132,7 @@ public final class BukkitCraftEngine extends CraftEngine {
         try {
             BlockGenerator.init();
             BlockStateGenerator.init();
+            StatePredicateGenerator.init();
             super.blockManager = new BukkitBlockManager(this);
         } catch (Throwable e) {
             throw new InjectionException("Error injecting blocks", e);
@@ -135,6 +146,11 @@ public final class BukkitCraftEngine extends CraftEngine {
             FeatureInjector.init();
         } catch (Throwable e) {
             throw new InjectionException("Error injecting features", e);
+        }
+        try {
+            BiomeFilterGenerator.init();
+        } catch (Throwable e) {
+            throw new InjectionException("Error injecting biome filter", e);
         }
         try {
             BlockStateProviderInjector.init();
@@ -170,8 +186,6 @@ public final class BukkitCraftEngine extends CraftEngine {
         BukkitFurnitureElementConfigs.init();
         BukkitDataComponentPredicates.init();
         CommonConditions.register(Key.ce("test_flag"), TestFlagCondition.factory());
-        // 初始化 onload 阶段的兼容性
-        super.compatibilityManager().onLoad();
         // 创建网络管理器
         super.networkManager = new BukkitNetworkManager(this);
         // 初始化方块管理器，获取镜像注册表，初始化网络映射
@@ -200,8 +214,15 @@ public final class BukkitCraftEngine extends CraftEngine {
         super.furnitureManager = new BukkitFurnitureManager(this);
         // 初始化画管理器
         super.paintingManager = new BukkitPaintingManager(this);
+        // 初始化属性管理器
+        super.attributeManager = new BukkitAttributeManager(this);
         // 注册默认的parser
         this.registerDefaultParsers();
+        // 脚本事件订阅挂到 Bukkit 事件总线
+        if (super.scriptManager instanceof ScriptManagerImpl scriptManager) {
+            scriptManager.setEventSubscriber(new BukkitScriptEventManager(this));
+            scriptManager.setPlaceholderManager(new BukkitScriptPlaceholderManager());
+        }
         // 完成加载
         this.successfullyLoaded = true;
     }
@@ -254,13 +275,19 @@ public final class BukkitCraftEngine extends CraftEngine {
             this.logger.error("Failed to enable compatibility manager", t);
         }
         super.onPluginEnable();
+        Bukkit.getMessenger().registerOutgoingPluginChannel(this.javaPlugin(), "BungeeCord");
+        if (VersionHelper.hasPaperPatch) {
+            this.serverEventListener = new ServerEventListener(this);
+            Bukkit.getPluginManager().registerEvents(this.serverEventListener, javaPlugin());
+        }
     }
 
     @Override
     public void onPluginDisable() {
+        if (super.isDisabled) return;
         super.onPluginDisable();
         if (this.tickTask != null) this.tickTask.cancel();
-        if (VersionHelper.hasPaperPatch && !ServerUtils.isStopping()) {
+        if (VersionHelper.hasPaperPatch && ServerUtils.isRunning()) {
             logger().error(" ");
             logger().error(" ");
             logger().error(" ");
@@ -435,10 +462,6 @@ public final class BukkitCraftEngine extends CraftEngine {
 
     public JavaPlugin javaPlugin() {
         return this.javaPlugin;
-    }
-
-    public static BukkitCraftEngine instance() {
-        return instance;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

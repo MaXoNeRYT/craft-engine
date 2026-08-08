@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.registry;
 
+import net.momirealms.craftengine.core.attribute.DamageFormula;
+import net.momirealms.craftengine.core.attribute.DamageFormulaType;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorType;
@@ -22,14 +24,14 @@ import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureSetting
 import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureSettingsModifierType;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorType;
-import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
-import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicateType;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.equipment.EquipmentType;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.ItemProcessorType;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeSerializer;
+import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
+import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicateType;
 import net.momirealms.craftengine.core.item.recipe.remainder.CraftRemainder;
 import net.momirealms.craftengine.core.item.recipe.remainder.CraftRemainderType;
 import net.momirealms.craftengine.core.item.recipe.result.PostProcessor;
@@ -45,6 +47,8 @@ import net.momirealms.craftengine.core.loot.function.LootFunction;
 import net.momirealms.craftengine.core.loot.function.LootFunctionType;
 import net.momirealms.craftengine.core.loot.function.formula.Formula;
 import net.momirealms.craftengine.core.loot.function.formula.FormulaType;
+import net.momirealms.craftengine.core.loot.source.LootSource;
+import net.momirealms.craftengine.core.loot.source.LootSourceType;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.matcher.PathMatcherType;
 import net.momirealms.craftengine.core.pack.conflict.resolution.Resolution;
@@ -97,6 +101,7 @@ public final class BuiltInRegistries {
     public static final Registry<ItemBehaviorType<? extends ItemBehavior>> ITEM_BEHAVIOR_TYPE = createConstantBoundRegistry(Registries.ITEM_BEHAVIOR_TYPE, 64);
     public static final Registry<PropertyType<? extends Comparable<?>>> PROPERTY_TYPE = createConstantBoundRegistry(Registries.PROPERTY_TYPE, 16);
     public static final Registry<NumberProviderType<? extends NumberProvider>> NUMBER_PROVIDER_TYPE = createConstantBoundRegistry(Registries.NUMBER_PROVIDER_TYPE, 16);
+    public static final Registry<DamageFormulaType<? extends DamageFormula>> DAMAGE_FORMULA_TYPE = createConstantBoundRegistry(Registries.DAMAGE_FORMULA_TYPE, 4);
     public static final Registry<TemplateArgumentType<? extends TemplateArgument>> TEMPLATE_ARGUMENT_TYPE = createConstantBoundRegistry(Registries.TEMPLATE_ARGUMENT_TYPE, 16);
     public static final Registry<ItemModelType<? extends ItemModel>> ITEM_MODEL_TYPE = createConstantBoundRegistry(Registries.ITEM_MODEL_TYPE, 16);
     public static final Registry<TintType<? extends Tint>> TINT_TYPE = createConstantBoundRegistry(Registries.TINT_TYPE, 16);
@@ -131,6 +136,7 @@ public final class BuiltInRegistries {
     public static final Registry<ItemSettingsModifierType<? extends ItemSettingsModifier>> ITEM_SETTINGS_TYPE = createConstantBoundRegistry(Registries.ITEM_SETTINGS_TYPE, 16);
     public static final Registry<LootFunctionType<? extends LootFunction>> LOOT_FUNCTION_TYPE = createConstantBoundRegistry(Registries.LOOT_FUNCTION_TYPE, 32);
     public static final Registry<LootEntryContainerType<? extends LootEntryContainer>> LOOT_ENTRY_CONTAINER_TYPE = createConstantBoundRegistry(Registries.LOOT_ENTRY_CONTAINER_TYPE, 16);
+    public static final Registry<LootSourceType<? extends LootSource>> LOOT_SOURCE_TYPE = createConstantBoundRegistry(Registries.LOOT_SOURCE_TYPE, 16);
     public static final Registry<Dialog.Type<? extends Dialog>> DIALOG_TYPE = createConstantBoundRegistry(Registries.DIALOG_TYPE, 16);
     public static final Registry<DialogBody.Type<? extends DialogBody>> DIALOG_BODY_TYPE = createConstantBoundRegistry(Registries.DIALOG_BODY_TYPE, 8);
     public static final Registry<DialogAction.Type<? extends DialogAction>> DIALOG_ACTION_TYPE = createConstantBoundRegistry(Registries.DIALOG_ACTION_TYPE, 8);

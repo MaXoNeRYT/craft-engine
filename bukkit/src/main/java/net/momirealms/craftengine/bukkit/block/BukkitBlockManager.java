@@ -4,11 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.momirealms.craftengine.bukkit.block.behavior.*;
 import net.momirealms.craftengine.bukkit.block.listener.BlockEventListener;
-import net.momirealms.craftengine.bukkit.block.listener.PaperBlockEventListener;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator;
 import net.momirealms.craftengine.bukkit.plugin.injector.MaterialInjector;
+import net.momirealms.craftengine.bukkit.plugin.injector.StatePredicateGenerator;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
@@ -60,13 +59,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class BukkitBlockManager extends AbstractBlockManager {
     public static final Set<Object> CLIENT_SIDE_NOTE_BLOCKS = new HashSet<>(2048, 0.6f);
-    private static final Object ALWAYS_FALSE = FastNMS.INSTANCE.createAlwaysStatePredicate(false);
-    private static final Object ALWAYS_TRUE = FastNMS.INSTANCE.createAlwaysStatePredicate(true);
+    private static final Object ALWAYS_FALSE = StatePredicateGenerator.alwaysFalse();
+    private static final Object ALWAYS_TRUE = StatePredicateGenerator.alwaysTrue();
     private static BukkitBlockManager instance;
     private final BukkitCraftEngine plugin;
     // 事件监听器
     private final BlockEventListener blockEventListener;
-    private final PaperBlockEventListener paperBlockEventListener;
     // 用于缓存string形式的方块状态到原版方块状态
     private final Map<String, BlockStateWrapper> blockStateCache = new ConcurrentHashMap<>(1024);
     // 用于临时存储可燃烧自定义方块的列表
@@ -90,7 +88,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         super(plugin, RegistryUtils.currentBlockRegistrySize(), Config.serverSideBlocks());
         this.plugin = plugin;
         this.blockEventListener = new BlockEventListener(plugin, this);
-        this.paperBlockEventListener = VersionHelper.hasPaperPatch ? new PaperBlockEventListener() : null;
         this.registerServerSideCustomBlocks(Config.serverSideBlocks());
         EmptyBlockDefinition.init();
         EmptyBlockDefinition.STATE.setBehavior(EmptyBlockBehavior.INSTANCE);
@@ -116,7 +113,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     @Override
     public void delayedInit() {
         Bukkit.getPluginManager().registerEvents(this.blockEventListener, this.plugin.javaPlugin());
-        if (this.paperBlockEventListener != null) Bukkit.getPluginManager().registerEvents(this.paperBlockEventListener, this.plugin.javaPlugin());
     }
 
     @Override
@@ -144,7 +140,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     public void disable() {
         this.unload();
         HandlerList.unregisterAll(this.blockEventListener);
-        if (this.paperBlockEventListener != null) HandlerList.unregisterAll(this.paperBlockEventListener);
     }
 
     @Override
@@ -424,6 +419,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 HolderProxy.ReferenceProxy.INSTANCE.setTags(blockHolder, Set.of());
                 DelegatingBlockState newBlockState = (DelegatingBlockState) BlockProxy.INSTANCE.getDefaultBlockState(customBlock);
                 this.customBlockStates[i] = newBlockState;
+                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.initCache(newBlockState);
                 IdMapperProxy.INSTANCE.add(BlockProxy.BLOCK_STATE_REGISTRY, newBlockState);
                 if (injectBukkitMaterial) {
                     newMaterial[length + i] = MaterialInjector.createMaterial(customBlockId, length + i, customBlock);

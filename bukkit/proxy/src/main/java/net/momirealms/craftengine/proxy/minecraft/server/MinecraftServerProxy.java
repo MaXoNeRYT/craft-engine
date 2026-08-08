@@ -51,6 +51,12 @@ public interface MinecraftServerProxy {
     @MethodInvoker(name = "hasStopped")
     boolean hasStopped(Object target);
 
+    @MethodInvoker(name = "isRunning")
+    boolean isRunning(Object target);
+
+    @FieldGetter(name = "structureTemplateManager")
+    Object getStructureTemplateManager(Object target);
+
     @ReflectionProxy(name = "net.minecraft.server.MinecraftServer$ServerResourcePackInfo")
     interface ServerResourcePackInfoProxy {
         ServerResourcePackInfoProxy INSTANCE = ASMProxyFactory.create(ServerResourcePackInfoProxy.class);
